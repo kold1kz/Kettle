@@ -1,3 +1,0 @@
-tempeture = 100
-volume = 1.0
-time_boil = 10

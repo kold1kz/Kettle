@@ -1,29 +1,29 @@
 """kettle"""
 import sqlite3
 import time
+import configparser
 
 from threading import *
 from multiprocessing import Process
 from loguru import logger
 
-logger.add(
-    "debug.log", format="{time} {level} {message}", level="DEBUG", rotation="100MB")
-#compression="zip" 
+logger.add("debug.log",
+           format="{time} {level} {message}",
+           level="DEBUG",
+           rotation="100MB")
+#compression="zip"
 # логгер
 
 
 class Kettle:
     """ класс чайник """
-
     max_volume = 1.0
     # на сколько чайник заполнен
     time = 0
     # время которое он кипит
     temperature = 100
-
-    time_boil = 10
-
     # температура пока кипит
+    time_boil = 10
 
     def __init__(self, status=False, volume=0):
         # инициализация включаем и задаем воду
@@ -34,10 +34,8 @@ class Kettle:
     def boil(self):
         """кипение"""
         check = 0
-        # logger.info(
-        #     f'temperature = {Kettle.temperature/Kettle.time_boil*Kettle.time}')
         while Kettle.time != Kettle.time_boil:
-            if self.status and self.volume!=0:
+            if self.status and self.volume != 0:
                 Kettle.time += 1
                 logger.info(
                     f'temperature = {Kettle.temperature/Kettle.time_boil*Kettle.time}'
@@ -98,3 +96,31 @@ class Kettle:
     def water(self):
         """water in kettle """
         logger.info(f'water = {self.volume}')
+
+    @logger.catch
+    def set_config(self):
+        """take param from config.txt"""
+        config = configparser.ConfigParser()
+        config.read("config.ini")
+        cfg_param = config["Params"]
+        if cfg_param["max_volume"]:
+            self.max_volume = cfg_param["max_volume"]
+        else:
+            self.max_volume = 1.0
+
+        if cfg_param["temperature"]:
+            self.temperature = cfg_param["temperature"]
+        else:
+            self.temperature = 100
+
+        if cfg_param["time_boil"]:
+            self.time_boil = cfg_param["time_boil"]
+        else:
+            self.time_boil = 10
+
+    @logger.catch
+    def out_param(self):
+        """output param"""
+        logger.info(f'\ntemperature = {self.temperature}\n'
+                    f'max_volume = {self.max_volume}\n'
+                    f'time_boil = {self.time_boil}')
