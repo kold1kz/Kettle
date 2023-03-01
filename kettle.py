@@ -12,7 +12,7 @@ logger.add("debug.log",
            format="{time} {level} {message}",
            level="DEBUG",
            rotation="10MB")
-#compression="zip"
+# compression="zip"
 # логгер
 
 
@@ -35,7 +35,7 @@ class Kettle:
     @logger.catch
     def boil(self):
         """boil"""
-        #run_task_boil = self.boil_func()
+        # run_task_boil = self.boil_func()
         asyncio.run(self.boil_func())
 
     @logger.catch
@@ -80,19 +80,16 @@ class Kettle:
     @logger.catch
     def onoff(self):
         """on or off kettle"""
-        asyncio.run(self.set_status_func())
-
-    @logger.catch
-    async def set_status_func(self):
-        """on or off func"""
         if not self.status:
             self.status = True
             logger.info("Kettle ON")
-            self.temp_run()
-            # await self.temper()
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(self.main())
         else:
             self.status = False
+            loop.cancel()
             logger.info("Kettle off")
+    
 
     @logger.catch
     def water(self):
@@ -130,16 +127,13 @@ class Kettle:
                     f'status = {self.status}')
 
     @logger.catch
+    async def main(self):
+        asyncio.create_task(self.temper())
+
+    @logger.catch
     async def temper(self):
         """kittle out temp"""
-        while self.status:
-            await asyncio.sleep(1)
+        while self.status is True:
             logger.info(
                 f'temperature = {self.temperature/self.time_boil*self.time}')
-            
-    @logger.catch
-    def temp_run(self):
-        """temp"""
-        test = asyncio.new_event_loop()
-        test.run_until_complete(self.temper())
-            
+            await asyncio.sleep(1)
