@@ -1,9 +1,10 @@
 """kettle"""
-import sqlite3
-import time
+# import sqlite3
+# import time
 import configparser
 import asyncio
 
+from contextlib import suppress
 from threading import *
 from multiprocessing import Process
 from loguru import logger
@@ -28,7 +29,7 @@ class Kettle:
     # on or off
     status = False
 
-    def __init__(self,  volume=0.0):
+    def __init__(self, volume=0.0):
         # можем задаем воду
         self.volume = volume
 
@@ -78,20 +79,6 @@ class Kettle:
             self.volume -= volume
 
     @logger.catch
-    def onoff(self):
-        """on or off kettle"""
-        if not self.status:
-            self.status = True
-            logger.info("Kettle ON")
-            loop = asyncio.new_event_loop()
-            loop.run_until_complete(self.main())
-        else:
-            self.status = False
-            loop.cancel()
-            logger.info("Kettle off")
-    
-
-    @logger.catch
     def water(self):
         """water in kettle """
         logger.info(f'water = {self.volume}')
@@ -127,13 +114,36 @@ class Kettle:
                     f'status = {self.status}')
 
     @logger.catch
-    async def main(self):
-        asyncio.create_task(self.temper())
-
-    @logger.catch
     async def temper(self):
         """kittle out temp"""
         while self.status is True:
+            await asyncio.sleep(1)
             logger.info(
                 f'temperature = {self.temperature/self.time_boil*self.time}')
+
+    @logger.catch
+    async def main(self):
+        """create task"""
+        asyncio.create_task(self.temper())
+        while self.status is True:
             await asyncio.sleep(1)
+
+    @logger.catch
+    def onoff(self):
+        """on or off kettle"""
+        if not self.status:
+            self.status = True
+            logger.info("Kettle ON")
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(self.temper())
+            loop.stop()
+        else:
+            self.status = False
+            logger.info("Kettle off")
+
+if __name__ == '__main__':
+    k = Kettle(0.4)
+    k.out_param()
+    k.onoff()
+    k.boil()
+    #k.onoff()
