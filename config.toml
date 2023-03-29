@@ -1,0 +1,6 @@
+# config.toml
+
+[Params]
+temperature = 100
+max_volume = 1.0
+time_boil = 10
